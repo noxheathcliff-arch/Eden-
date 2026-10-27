@@ -756,13 +756,17 @@ void BufferCache<P>::BindHostIndexBuffer() {
             auto upload_staging = runtime.UploadStagingBuffer(size);
             std::array<BufferCopy, 1> copies{{BufferCopy{.src_offset = upload_staging.offset, .dst_offset = 0, .size = size}}};
             std::memcpy(upload_staging.mapped_span.data(), draw_state.inline_index_draw_indexes.data(), size);
-            runtime.CopyBuffer(buffer, upload_staging.buffer, copies, true);
+            const bool can_reorder = runtime.CanReorderUpload(buffer, copies);
+            runtime.CopyBuffer(buffer, upload_staging.buffer, copies, true, can_reorder);
         } else {
             buffer.ImmediateUpload(0, draw_state.inline_index_draw_indexes);
         }
     }
     if constexpr (HAS_FULL_INDEX_AND_PRIMITIVE_SUPPORT) {
         const u32 new_offset = offset + draw_state.index_buffer.first * u32(draw_state.index_buffer.FormatSizeInBytes());
+        if (!draw_state.inline_index_draw_indexes.empty()) {
+            buffer.MarkUsage(offset, size);
+        }
         runtime.BindIndexBuffer(buffer, new_offset, size);
     } else {
         buffer.MarkUsage(offset, size);
