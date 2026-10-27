@@ -749,15 +749,21 @@ void RasterizerVulkan::InvalidateRegion(DAddr addr, u64 size, VideoCommon::Cache
 
 void RasterizerVulkan::InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>> sequences) {
     {
-        std::scoped_lock lock{texture_cache.mutex};
-        for (const auto& [addr, size] : sequences) {
-            texture_cache.WriteMemory(addr, size);
-        }
-    }
-    {
         std::scoped_lock lock{buffer_cache.mutex};
         for (const auto& [addr, size] : sequences) {
             buffer_cache.WriteMemory(addr, size);
+        }
+    }
+    // These ranges only come from inline constant buffer updates, which run before almost every
+    // draw. They never hold shaders, queries or images in practice, so only the buffer cache needs
+    // to see them unless accuracy is high.
+    if (!Settings::IsGPULevelHigh()) {
+        return;
+    }
+    {
+        std::scoped_lock lock{texture_cache.mutex};
+        for (const auto& [addr, size] : sequences) {
+            texture_cache.WriteMemory(addr, size);
         }
     }
     {
@@ -1004,7 +1010,7 @@ void RasterizerVulkan::LoadDiskResources(u64 title_id, std::stop_token stop_load
 void RasterizerVulkan::FlushWork() {
 #ifdef __ANDROID__
     static constexpr u32 DRAWS_TO_DISPATCH = 512;
-    static constexpr u32 CHECK_MASK = 7;
+    static constexpr u32 CHECK_MASK = 31;
 #else
     static constexpr u32 DRAWS_TO_DISPATCH = 4096;
     static constexpr u32 CHECK_MASK = 7;
