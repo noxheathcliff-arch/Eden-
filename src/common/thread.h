@@ -108,6 +108,9 @@ enum class ThreadPlacement : u32 {
 void SetCurrentThreadPriority(ThreadPriority new_priority);
 void SetCurrentThreadName(const char* name);
 void SetCurrentThreadToPerformanceCores();
+/// Pins the thread to the single fastest core when the CPU has one, otherwise to the
+/// performance cores.
+void SetCurrentThreadToPrimeCore();
 void SetCurrentThreadToEfficiencyCores();
 void SetCurrentThreadToBackgroundWork();
 void SetCurrentThreadToAllCores();

@@ -934,6 +934,13 @@ abstract class SettingsItem(
             )
             put(
                 SwitchSetting(
+                    BooleanSetting.GPU_THREAD_PRIME_CORE,
+                    titleId = R.string.gpu_thread_prime_core,
+                    descriptionId = R.string.gpu_thread_prime_core_description
+                )
+            )
+            put(
+                SwitchSetting(
                     BooleanSetting.SYNC_MEMORY_OPERATIONS,
                     titleId = R.string.sync_memory_operations,
                     descriptionId = R.string.sync_memory_operations_description

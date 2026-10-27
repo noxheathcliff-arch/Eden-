@@ -207,7 +207,14 @@ android {
 
             externalNativeBuild {
                 cmake {
-                    arguments.add("-DYUZU_BUILD_PRESET=exynos1580")
+                    arguments.addAll(
+                        listOf(
+                            "-DYUZU_BUILD_PRESET=exynos1580",
+                            "-DENABLE_LTO=ON",
+                            "-DCMAKE_C_FLAGS_RELWITHDEBINFO=-O3 -DNDEBUG",
+                            "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O3 -DNDEBUG"
+                        )
+                    )
                 }
             }
 

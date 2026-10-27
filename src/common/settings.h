@@ -349,6 +349,8 @@ struct Values {
                                                         "resolution_setup", Category::Renderer};
     SwitchableSetting<bool> dynamic_resolution{linkage, false, "dynamic_resolution",
                                                Category::Renderer};
+    SwitchableSetting<bool> gpu_thread_prime_core{linkage, false, "gpu_thread_prime_core",
+                                                  Category::RendererAdvanced};
     SwitchableSetting<u32, true> dynamic_resolution_target_fps{linkage,
                                                                30,
                                                                15,

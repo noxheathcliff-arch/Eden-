@@ -105,6 +105,7 @@ enum class CoreGroup {
     Unrestricted,
     Performance,
     Efficiency,
+    Prime,
 };
 
 struct ThreadPolicy {
@@ -125,6 +126,7 @@ struct CpuTopologyState {
     cpu_set_t allowed{};
     cpu_set_t performance{};
     cpu_set_t efficiency{};
+    cpu_set_t prime{};
     bool separated = false;
     bool initialized = false;
 
@@ -243,6 +245,7 @@ void ComputeTopologyLocked(CpuTopologyState& state) {
     CPU_ZERO(&state.allowed);
     CPU_ZERO(&state.performance);
     CPU_ZERO(&state.efficiency);
+    CPU_ZERO(&state.prime);
 
     if (sched_getaffinity(getpid(), sizeof(state.allowed), &state.allowed) != 0) {
         LOG_WARNING(Common, "Could not query process CPU affinity: {}",
@@ -281,6 +284,9 @@ void ComputeTopologyLocked(CpuTopologyState& state) {
     });
 
     const s64 fastest = cores.front().weight;
+    if (cores.size() > 1 && cores[1].weight < fastest) {
+        CPU_SET(cores.front().cpu, &state.prime);
+    }
     size_t taken = 0;
     for (const auto& core : cores) {
         const bool fast_enough =
@@ -333,7 +339,17 @@ bool ApplyCoreGroupLocked(CpuTopologyState& state, pid_t tid, CoreGroup group,
     const bool restrict_group = group != CoreGroup::Unrestricted && state.separated;
     const cpu_set_t* mask = &state.allowed;
     if (restrict_group) {
-        mask = group == CoreGroup::Performance ? &state.performance : &state.efficiency;
+        switch (group) {
+        case CoreGroup::Prime:
+            mask = CPU_COUNT(&state.prime) == 1 ? &state.prime : &state.performance;
+            break;
+        case CoreGroup::Performance:
+            mask = &state.performance;
+            break;
+        default:
+            mask = &state.efficiency;
+            break;
+        }
     }
     if (CPU_COUNT(mask) == 0) {
         return false;
@@ -546,6 +562,14 @@ void SetCurrentThreadToPerformanceCores() {
         return;
     }
     SetCurrentThreadCoreGroup(CoreGroup::Performance);
+#endif
+}
+
+void SetCurrentThreadToPrimeCore() {
+#if defined(__ANDROID__)
+    // Keep the performance hint session for clock boosting, but stay on the fastest core
+    ADPF::AddCurrentThread(ADPF::Session::Render);
+    SetCurrentThreadCoreGroup(CoreGroup::Prime);
 #endif
 }
 
