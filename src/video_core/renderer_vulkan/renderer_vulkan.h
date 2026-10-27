@@ -17,6 +17,7 @@
 #include "video_core/renderer_vulkan/present/frame_gen.h"
 #endif
 #include "video_core/renderer_vulkan/vk_blit_screen.h"
+#include "video_core/renderer_vulkan/vk_dynamic_resolution.h"
 #include "video_core/renderer_vulkan/vk_present_manager.h"
 #include "video_core/renderer_vulkan/vk_rasterizer.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
@@ -101,6 +102,7 @@ private:
     BlitScreen blit_capture;
     BlitScreen blit_applet;
     RasterizerVulkan rasterizer;
+    DynamicResolution dynamic_resolution;
 #ifdef HAS_LSFG
     FrameGen frame_gen;
 #endif

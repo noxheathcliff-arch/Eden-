@@ -372,6 +372,18 @@ void UpdateRescalingInfo() {
     const auto setup = values.resolution_setup.GetValue();
     auto& info = values.resolution_info;
     TranslateResolutionInfo(setup, info);
+    if (values.dynamic_resolution.GetValue()) {
+        // Shaders must be built with rescaling support for the scale to change at runtime
+        info.active = true;
+        info.downscale = true;
+    }
+}
+
+void SetDynamicResolutionScale(ResolutionSetup setup) {
+    auto& info = values.resolution_info;
+    TranslateResolutionInfo(setup, info);
+    info.active = true;
+    info.downscale = true;
 }
 
 u32 FrameGenMultiplier() {

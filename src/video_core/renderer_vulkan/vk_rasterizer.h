@@ -11,6 +11,7 @@
 #include <boost/container/static_vector.hpp>
 
 #include "common/common_types.h"
+#include "common/settings_enums.h"
 #include "video_core/control/channel_state_cache.h"
 #include "video_core/engines/maxwell_dma.h"
 #include "video_core/host1x/gpu_device_memory_manager.h"
@@ -123,6 +124,9 @@ public:
     void TiledCacheBarrier() override;
     void FlushCommands() override;
     void TickFrame() override;
+
+    /// Releases scaled images and switches to a new resolution scale, at a frame boundary.
+    void ApplyResolutionScale(Settings::ResolutionSetup setup);
     bool AccelerateConditionalRendering() override;
     bool HasDrawTransformFeedback() override;
     bool AccelerateSurfaceCopy(const Tegra::Engines::Fermi2D::Surface& src,

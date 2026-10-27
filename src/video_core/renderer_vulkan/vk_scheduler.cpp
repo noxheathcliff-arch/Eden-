@@ -47,6 +47,23 @@ Scheduler::Scheduler(const Device& device_, StateTracker& state_tracker_)
       master_semaphore{std::make_unique<MasterSemaphore>(device)},
       command_pool{std::make_unique<CommandPool>(*master_semaphore, device)} {
 
+    if (Settings::values.dynamic_resolution.GetValue() && device.SupportsTimestamps()) {
+        const auto families = device.GetPhysical().GetQueueFamilyProperties();
+        const u32 valid_bits = families[device.GetGraphicsFamily()].timestampValidBits;
+        if (valid_bits > 0) {
+            timestamp_pool = device.GetLogical().CreateQueryPool({
+                .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .queryType = VK_QUERY_TYPE_TIMESTAMP,
+                .queryCount = TIMESTAMP_PAIRS * 2,
+                .pipelineStatistics = 0,
+            });
+            timestamp_period_ns = static_cast<f64>(device.GetTimestampPeriod());
+            timestamp_mask = valid_bits >= 64 ? ~0ULL : (1ULL << valid_bits) - 1;
+        }
+    }
+
     AcquireNewChunk();
     AllocateWorkerCommandBuffer();
     worker_thread = std::jthread([this](std::stop_token token) { WorkerThread(token); });
@@ -67,6 +84,35 @@ void Scheduler::Finish(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore)
     SubmitExecution(signal_semaphore, wait_semaphore);
     Wait(presubmit_tick);
     AllocateNewContext();
+}
+
+u64 Scheduler::ConsumeGpuBusyNs() {
+    if (!timestamp_pool) {
+        return 0;
+    }
+    u64 busy_ns = 0;
+    std::scoped_lock lock{timestamp_mutex};
+    while (!pending_timestamps.empty()) {
+        const auto [tick, entry] = pending_timestamps.front();
+        if (!master_semaphore->IsFree(tick)) {
+            break;
+        }
+        const u32 pair = entry & ~TIMESTAMP_IGNORE_BIT;
+        std::array<u64, 2> values{};
+        const VkResult result = device.GetLogical().GetQueryResults(
+            *timestamp_pool, pair * 2, 2, sizeof(values), values.data(), sizeof(u64),
+            VK_QUERY_RESULT_64_BIT);
+        if (result == VK_NOT_READY) {
+            break;
+        }
+        if (result == VK_SUCCESS && (entry & TIMESTAMP_IGNORE_BIT) == 0) {
+            const u64 delta = (values[1] - values[0]) & timestamp_mask;
+            busy_ns += static_cast<u64>(static_cast<f64>(delta) * timestamp_period_ns);
+        }
+        pending_timestamps.pop_front();
+        timestamp_pairs_in_flight.fetch_sub(1, std::memory_order_relaxed);
+    }
+    return busy_ns;
 }
 
 void Scheduler::WaitWorker() {
@@ -337,6 +383,15 @@ void Scheduler::AllocateWorkerCommandBuffer() {
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         .pInheritanceInfo = nullptr,
     });
+    if (timestamp_pool &&
+        timestamp_pairs_in_flight.load(std::memory_order_relaxed) < TIMESTAMP_PAIRS) {
+        timestamp_current_pair = timestamp_next_pair;
+        timestamp_next_pair = (timestamp_next_pair + 1) % TIMESTAMP_PAIRS;
+        timestamp_pairs_in_flight.fetch_add(1, std::memory_order_relaxed);
+        current_upload_cmdbuf.ResetQueryPool(*timestamp_pool, timestamp_current_pair * 2, 2);
+        current_upload_cmdbuf.WriteTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, *timestamp_pool,
+                                             timestamp_current_pair * 2);
+    }
 }
 
 u64 Scheduler::SubmitExecution(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
@@ -353,6 +408,15 @@ u64 Scheduler::SubmitExecution(VkSemaphore signal_semaphore, VkSemaphore wait_se
             .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
         };
         upload_cmdbuf.PipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, WRITE_BARRIER);
+        if (timestamp_current_pair != ~0U) {
+            cmdbuf.WriteTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool,
+                                  timestamp_current_pair * 2 + 1);
+            std::scoped_lock ts_lock{timestamp_mutex};
+            // Submissions waiting on the swapchain would also count the acquire wait
+            const u32 ignore_bit = wait_semaphore != VK_NULL_HANDLE ? TIMESTAMP_IGNORE_BIT : 0;
+            pending_timestamps.emplace_back(signal_value, timestamp_current_pair | ignore_bit);
+            timestamp_current_pair = ~0U;
+        }
         upload_cmdbuf.End();
         cmdbuf.End();
 

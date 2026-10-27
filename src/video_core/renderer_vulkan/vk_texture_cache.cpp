@@ -2344,6 +2344,10 @@ bool Image::ScaleUp(bool ignore) {
     if (!resolution.active) {
         return false;
     }
+    if (resolution.up_scale == 1 && resolution.down_shift == 0) {
+        // Dynamic resolution at native scale, a copy would only cost memory and blits
+        return false;
+    }
     if (True(flags & ImageFlagBits::Rescaled)) {
         return false;
     }
@@ -2377,6 +2381,20 @@ bool Image::ScaleUp(bool ignore) {
         BlitScale(*scheduler, *original_image, *scaled_image, info, aspect_mask, resolution);
     }
     return true;
+}
+
+void Image::DropScaledCopy() {
+    flags &= ~ImageFlagBits::Rescaled;
+    current_image = &Image::original_image;
+    scale_framebuffer.reset();
+    normal_framebuffer.reset();
+    scale_view.reset();
+    normal_view.reset();
+    for (auto& view : storage_image_views) {
+        view = vk::ImageView{};
+    }
+    scaled_image = vk::Image{};
+    has_scaled = false;
 }
 
 bool Image::ScaleDown(bool ignore) {

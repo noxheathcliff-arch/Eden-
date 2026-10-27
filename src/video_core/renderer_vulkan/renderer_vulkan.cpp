@@ -176,6 +176,7 @@ try
                   scheduler,
                   PresentFiltersForAppletCapture)
     , rasterizer(render_window, gpu, device_memory, device, memory_allocator, state_tracker, scheduler)
+    , dynamic_resolution(scheduler, rasterizer)
 #ifdef HAS_LSFG
     , frame_gen(memory_allocator, scheduler)
 #endif
@@ -246,6 +247,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 
     gpu.RendererFrameEndNotify();
     rasterizer.TickFrame();
+    dynamic_resolution.OnFramePresented();
 }
 
 void RendererVulkan::Report() const {

@@ -412,6 +412,23 @@ abstract class SettingsItem(
             )
             put(
                 SwitchSetting(
+                    BooleanSetting.RENDERER_DYNAMIC_RESOLUTION,
+                    titleId = R.string.dynamic_resolution,
+                    descriptionId = R.string.dynamic_resolution_description
+                )
+            )
+            put(
+                SliderSetting(
+                    IntSetting.RENDERER_DYNAMIC_RESOLUTION_TARGET_FPS,
+                    titleId = R.string.dynamic_resolution_target_fps,
+                    descriptionId = R.string.dynamic_resolution_target_fps_description,
+                    min = 15,
+                    max = 60,
+                    units = " fps"
+                )
+            )
+            put(
+                SwitchSetting(
                     BooleanSetting.INVERT_CONFIRM_BACK_CONTROLLER_BUTTONS,
                     titleId = R.string.invert_confirm_back_controller_buttons,
                     descriptionId = R.string.invert_confirm_back_controller_buttons_description

@@ -168,6 +168,38 @@ void TextureCache<P>::RunGarbageCollector() {
 }
 
 template <class P>
+void TextureCache<P>::DropScaledImages() {
+    if (maxwell3d == nullptr) {
+        return;
+    }
+    std::vector<ImageId> scaled_images;
+    lru_cache.ForEachItemBelow(frame_tick + 1, [&](ImageId image_id) {
+        if (slot_images[image_id].HasScaled()) {
+            scaled_images.push_back(image_id);
+        }
+    });
+    if (scaled_images.empty()) {
+        return;
+    }
+    for (const ImageId image_id : scaled_images) {
+        Image& image = slot_images[image_id];
+        if (True(image.flags & ImageFlagBits::Rescaled)) {
+            ScaleDown(image);
+        }
+    }
+    // The scaled copies may still be in use by the GPU
+    runtime.Finish();
+    for (const ImageId image_id : scaled_images) {
+        Image& image = slot_images[image_id];
+        if (!runtime.CanReportMemoryUsage()) {
+            total_used_memory -= (std::min)(total_used_memory, GetScaledImageSizeBytes(image));
+        }
+        image.DropScaledCopy();
+        image.scale_rating = 0;
+    }
+}
+
+template <class P>
 void TextureCache<P>::TickFrame() {
     // If we can obtain the memory info, use it instead of the estimate.
     if (runtime.CanReportMemoryUsage()) {

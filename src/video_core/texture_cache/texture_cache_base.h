@@ -155,6 +155,10 @@ public:
     /// Notify the cache that a new frame has been queued
     void TickFrame();
 
+    /// Scales every rescaled image back to native and releases all scaled copies.
+    /// Must run before the resolution scale changes.
+    void DropScaledImages();
+
     /// Return a constant reference to the given image view id
     [[nodiscard]] const ImageView& GetImageView(ImageViewId id) const noexcept;
 

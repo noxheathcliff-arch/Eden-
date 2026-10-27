@@ -527,6 +527,8 @@ class SettingsFragmentPresenter(
     private fun addGraphicsSettings(sl: ArrayList<SettingsItem>) {
         sl.apply {
             add(IntSetting.RENDERER_RESOLUTION.key)
+            add(BooleanSetting.RENDERER_DYNAMIC_RESOLUTION.key)
+            add(IntSetting.RENDERER_DYNAMIC_RESOLUTION_TARGET_FPS.key)
             add(IntSetting.RENDERER_VSYNC.key)
             add(IntSetting.RENDERER_SCALING_FILTER.key)
             if (isSharpnessScalingFilterSelected()) {

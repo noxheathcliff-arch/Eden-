@@ -902,6 +902,13 @@ void RasterizerVulkan::FlushCommands() {
     scheduler.Flush();
 }
 
+void RasterizerVulkan::ApplyResolutionScale(Settings::ResolutionSetup setup) {
+    std::scoped_lock lock{texture_cache.mutex};
+    scheduler.RequestOutsideRenderPassOperationContext();
+    texture_cache.DropScaledImages();
+    Settings::SetDynamicResolutionScale(setup);
+}
+
 void RasterizerVulkan::TickFrame() {
     draw_counter = 0;
     guest_descriptor_queue.TickFrame();

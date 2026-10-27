@@ -317,6 +317,10 @@
     <string name="post_processing_preset_reset">Reset preset values</string>
     <string name="post_processing_reset">Reset to default</string>
     <string name="post_processing_empty">No effects found. Place .fx files in this folder:</string>
+    <string name="dynamic_resolution">Dynamic resolution</string>
+    <string name="dynamic_resolution_description">Lowers the rendering resolution, down to 0.5x, while the GPU cannot hold the target frame rate, and raises it back up to the chosen resolution once there is headroom. Takes effect on the next game launch.</string>
+    <string name="dynamic_resolution_target_fps">Dynamic resolution target</string>
+    <string name="dynamic_resolution_target_fps_description">Frame rate the dynamic resolution tries to hold. Use 30 for games locked at 30 fps.</string>
     <string name="frame_gen">Frame generation</string>
     <string name="frame_gen_per_game_description">Configure frame generation for this game</string>
     <string name="frame_gen_description">Insert interpolated frames between rendered ones using Lossless Scaling. Forces FIFO presentation while enabled.</string>

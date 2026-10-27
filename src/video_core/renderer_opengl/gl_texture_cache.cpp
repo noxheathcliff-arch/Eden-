@@ -1064,6 +1064,9 @@ bool Image::ScaleUp(bool ignore) {
     if (!resolution.active) {
         return false;
     }
+    if (resolution.up_scale == 1 && resolution.down_shift == 0) {
+        return false;
+    }
     if (True(flags & ImageFlagBits::Rescaled)) {
         return false;
     }
@@ -1083,6 +1086,13 @@ bool Image::ScaleUp(bool ignore) {
     }
     Scale(true);
     return true;
+}
+
+void Image::DropScaledCopy() {
+    flags &= ~ImageFlagBits::Rescaled;
+    current_texture = texture.handle;
+    upscaled_backup.Release();
+    has_scaled = false;
 }
 
 bool Image::ScaleDown(bool ignore) {

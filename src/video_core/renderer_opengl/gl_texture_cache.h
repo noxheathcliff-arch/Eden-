@@ -229,6 +229,8 @@ public:
 
     bool ScaleDown(bool ignore = false);
 
+    void DropScaledCopy();
+
     u64 allocation_tick;
 
 private:

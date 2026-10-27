@@ -6,7 +6,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
+#include <deque>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -93,6 +95,10 @@ public:
     void SetQueryCache(VideoCommon::QueryCacheBase<QueryCacheParams>& query_cache_) {
         query_cache = &query_cache_;
     }
+
+    /// Returns the GPU execution time of completed submissions since the last call.
+    /// Only sampled when dynamic resolution is enabled.
+    u64 ConsumeGpuBusyNs();
 
     // Registers a callback to perform on queue submission.
     void RegisterOnSubmit(std::function<void()>&& func) {
@@ -324,6 +330,18 @@ private:
     std::mutex queue_mutex;
     std::condition_variable_any event_cv;
     std::jthread worker_thread;
+
+    // GPU busy time sampling, one begin/end timestamp pair per submission
+    static constexpr u32 TIMESTAMP_PAIRS = 128;
+    static constexpr u32 TIMESTAMP_IGNORE_BIT = 1U << 31;
+    vk::QueryPool timestamp_pool;
+    f64 timestamp_period_ns = 1.0;
+    u64 timestamp_mask = ~0ULL;
+    u32 timestamp_next_pair = 0;            ///< Worker thread only
+    u32 timestamp_current_pair = ~0U;       ///< Worker thread only
+    std::atomic<u32> timestamp_pairs_in_flight{0};
+    std::mutex timestamp_mutex;
+    std::deque<std::pair<u64, u32>> pending_timestamps;
 
     std::chrono::steady_clock::duration frame_interval{};
     std::chrono::steady_clock::time_point start_time{};

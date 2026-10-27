@@ -361,6 +361,9 @@ public:
 
     bool ScaleDown(bool ignore = false);
 
+    /// Releases the scaled copy. The GPU must be done with it.
+    void DropScaledCopy();
+
     u64 allocation_tick;
 
     friend class BlockLinearUnswizzle3DPass;

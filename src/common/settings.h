@@ -347,6 +347,18 @@ struct Values {
     ResolutionScalingInfo resolution_info{};
     SwitchableSetting<ResolutionSetup> resolution_setup{linkage, ResolutionSetup::Res1X,
                                                         "resolution_setup", Category::Renderer};
+    SwitchableSetting<bool> dynamic_resolution{linkage, false, "dynamic_resolution",
+                                               Category::Renderer};
+    SwitchableSetting<u32, true> dynamic_resolution_target_fps{linkage,
+                                                               30,
+                                                               15,
+                                                               60,
+                                                               "dynamic_resolution_target_fps",
+                                                               Category::Renderer,
+                                                               Specialization::Countable,
+                                                               true,
+                                                               false,
+                                                               &dynamic_resolution};
 
     SwitchableSetting<VSyncMode, true> vsync_mode{linkage,
                                                   VSyncMode::Fifo,
@@ -996,6 +1008,8 @@ void LogSettings();
 
 void TranslateResolutionInfo(ResolutionSetup setup, ResolutionScalingInfo& info);
 void UpdateRescalingInfo();
+/// Changes the active resolution scale at runtime, used by dynamic resolution
+void SetDynamicResolutionScale(ResolutionSetup setup);
 
 // Restore the global state of all applicable settings in the Values struct
 void RestoreGlobalState(bool is_powered_on);

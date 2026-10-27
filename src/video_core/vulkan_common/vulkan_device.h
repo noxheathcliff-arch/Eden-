@@ -269,6 +269,16 @@ public:
     }
 
     /// Returns the physical device.
+    /// Returns true if timestamps can be written on graphics and compute queues.
+    bool SupportsTimestamps() const {
+        return properties.properties.limits.timestampComputeAndGraphics == VK_TRUE;
+    }
+
+    /// Returns the number of nanoseconds per timestamp tick.
+    f32 GetTimestampPeriod() const {
+        return properties.properties.limits.timestampPeriod;
+    }
+
     vk::PhysicalDevice GetPhysical() const {
         return physical;
     }
