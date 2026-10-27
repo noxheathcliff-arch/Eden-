@@ -590,6 +590,8 @@
     <string name="renderer_reactive_flushing_description">Improves rendering accuracy in some games at the cost of performance.</string>
     <string name="enable_buffer_history">Enable buffer history</string>
     <string name="enable_buffer_history_description">Enables access to previous buffer states. This option may improve rendering quality and performance consistency in some games.</string>
+    <string name="fast_occlusion_queries">Fast occlusion queries</string>
+    <string name="fast_occlusion_queries_description">Stops waiting for the GPU to report which objects are hidden, like Eden already does on Adreno and Mali. Faster, but objects or the map may flicker in some games.</string>
     <string name="gpu_thread_prime_core">GPU thread on the fastest core</string>
     <string name="gpu_thread_prime_core_description">Keeps the GPU emulation thread on the single fastest CPU core (for example the 2.9 GHz core of the Exynos 1580). Helps scenes limited by draw calls; can hurt if the game itself needs that core.</string>
     <string name="use_optimized_vertex_buffers">Optimized Vertex Buffers</string>

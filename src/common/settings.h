@@ -351,6 +351,8 @@ struct Values {
                                                Category::Renderer};
     SwitchableSetting<bool> gpu_thread_prime_core{linkage, false, "gpu_thread_prime_core",
                                                   Category::RendererAdvanced};
+    SwitchableSetting<bool> fast_occlusion_queries{linkage, false, "fast_occlusion_queries",
+                                                   Category::RendererAdvanced};
     SwitchableSetting<u32, true> dynamic_resolution_target_fps{linkage,
                                                                30,
                                                                15,

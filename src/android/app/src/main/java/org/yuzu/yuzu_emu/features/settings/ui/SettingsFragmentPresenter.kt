@@ -553,6 +553,7 @@ class SettingsFragmentPresenter(
             add(BooleanSetting.ENABLE_BUFFER_HISTORY.key)
             add(BooleanSetting.USE_OPTIMIZED_VERTEX_BUFFERS.key)
             add(BooleanSetting.GPU_THREAD_PRIME_CORE.key)
+            add(BooleanSetting.FAST_OCCLUSION_QUERIES.key)
 
             add(HeaderSetting(R.string.hacks))
 

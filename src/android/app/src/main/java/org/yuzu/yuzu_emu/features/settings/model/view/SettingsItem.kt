@@ -941,6 +941,13 @@ abstract class SettingsItem(
             )
             put(
                 SwitchSetting(
+                    BooleanSetting.FAST_OCCLUSION_QUERIES,
+                    titleId = R.string.fast_occlusion_queries,
+                    descriptionId = R.string.fast_occlusion_queries_description
+                )
+            )
+            put(
+                SwitchSetting(
                     BooleanSetting.SYNC_MEMORY_OPERATIONS,
                     titleId = R.string.sync_memory_operations,
                     descriptionId = R.string.sync_memory_operations_description

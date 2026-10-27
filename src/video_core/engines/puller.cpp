@@ -4,6 +4,8 @@
 // SPDX-FileCopyrightText: 2022 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <thread>
+
 #include "common/assert.h"
 #include "common/logging.h"
 #include "common/settings.h"
@@ -130,6 +132,8 @@ void Puller::ProcessSemaphoreAcquire(DmaPusher& dma_pusher) {
         regs.acquire_active = true;
         regs.acquire_value = value;
         dma_pusher.rasterizer->ReleaseFences();
+        // The value is written by another engine or the CPU, let them run
+        std::this_thread::yield();
         word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
         // TODO(kemathe73) figure out how to do the acquire_timeout
         regs.acquire_mode = false;

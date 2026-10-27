@@ -445,6 +445,12 @@ void Maxwell3D::CallMultiMethod(Core::System& system, u32 method, const u32* bas
         }
         [[fallthrough]];
     default:
+        if (amount != 0 && executing_macro == 0 && method < Regs::NUM_REGS &&
+            !execution_mask[method]) {
+            // Plain registers have no side effects, only the last write of the run is visible
+            ProcessDirtyRegisters(method, ProcessShadowRam(method, base_start[amount - 1]));
+            break;
+        }
         for (u32 i = 0; i < amount; i++) {
             CallMethod(system, method, base_start[i], methods_pending - i <= 1);
         }
