@@ -186,7 +186,12 @@ function(cpm_download url file)
         unset(args)
     endif()
 
-    foreach(i RANGE 5)
+    set(tries 5)
+    if (CPMUTIL_GIT_FALLBACK AND url MATCHES "^https://github.com/[^/]+/[^/]+/archive/")
+        set(tries 0)
+    endif()
+
+    foreach(i RANGE ${tries})
         file(DOWNLOAD ${url} ${file}
             ${args}
             STATUS ret)
@@ -199,6 +204,37 @@ function(cpm_download url file)
         echo_error("Download failed. Trying again in 5 seconds")
         sleep(5)
     endforeach()
+
+    # Optional fallback for networks that block GitHub archive downloads but allow git.
+    # The archive is rebuilt from git, so the upstream archive hash cannot be checked.
+    if (NOT code EQUAL 0 AND CPMUTIL_GIT_FALLBACK
+            AND url MATCHES "^https://github.com/([^/]+/[^/]+)/archive/(.+)\\.(tar\\.gz|zip)$")
+        set(git_repo "https://github.com/${CMAKE_MATCH_1}.git")
+        set(git_ref "${CMAKE_MATCH_2}")
+        set(git_dir "${file}_git")
+        echo_error("Download failed, falling back to git: ${git_repo} @ ${git_ref}")
+        file(REMOVE_RECURSE ${git_dir})
+        file(MAKE_DIRECTORY ${git_dir})
+        execute_process(COMMAND git init -q WORKING_DIRECTORY ${git_dir})
+        execute_process(COMMAND git fetch -q --depth 1 ${git_repo} ${git_ref}
+            WORKING_DIRECTORY ${git_dir} RESULT_VARIABLE git_ret)
+        set(git_rev FETCH_HEAD)
+        if (NOT git_ret EQUAL 0)
+            # Abbreviated commit hashes cannot be fetched directly
+            execute_process(COMMAND git fetch -q --filter=blob:none ${git_repo}
+                    "+refs/heads/*:refs/remotes/origin/*" "+refs/tags/*:refs/tags/*"
+                WORKING_DIRECTORY ${git_dir} RESULT_VARIABLE git_ret)
+            set(git_rev ${git_ref})
+        endif()
+        if (git_ret EQUAL 0)
+            execute_process(COMMAND git archive --format=tar.gz --prefix=src/ -o ${file} ${git_rev}
+                WORKING_DIRECTORY ${git_dir} RESULT_VARIABLE git_ret)
+        endif()
+        file(REMOVE_RECURSE ${git_dir})
+        if (git_ret EQUAL 0)
+            set(code 0)
+        endif()
+    endif()
 
     # TODO: use return code or something
     if (NOT code EQUAL 0)
