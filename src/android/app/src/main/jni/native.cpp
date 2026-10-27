@@ -34,7 +34,10 @@
 #include <core/file_sys/savedata_factory.h>
 #include <core/loader/nro.h>
 #include <frontend_common/content_manager.h>
+#include <array>
+#include <chrono>
 #include <jni.h>
+#include "video_core/nova_stats.h"
 
 extern "C" {
 #include <libavcodec/jni.h>
@@ -1002,6 +1005,41 @@ jdoubleArray Java_org_yuzu_yuzu_1emu_NativeLibrary_getPerfStats(JNIEnv* env, jcl
         env->SetDoubleArrayRegion(j_stats, 0, 4, stats);
     }
 
+    return j_stats;
+}
+
+jdoubleArray Java_org_yuzu_yuzu_1emu_NativeLibrary_getNovaStats(JNIEnv* env, jclass clazz) {
+    using namespace VideoCore;
+    struct Snapshot {
+        std::chrono::steady_clock::time_point time{};
+        u64 draws{}, submits{}, gpu_busy_ns{}, gpu_thread_busy_ns{};
+    };
+    static Snapshot last{};
+    static std::array<double, 5> stats{};
+
+    Snapshot now{std::chrono::steady_clock::now(),
+                 NovaStats::draws.load(std::memory_order_relaxed),
+                 NovaStats::submits.load(std::memory_order_relaxed),
+                 NovaStats::gpu_busy_ns.load(std::memory_order_relaxed),
+                 NovaStats::gpu_thread_busy_ns.load(std::memory_order_relaxed)};
+    const double elapsed_ns = static_cast<double>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(now.time - last.time).count());
+    // Average over at least half a second so the numbers stay readable
+    if (elapsed_ns >= 5e8 && last.time != std::chrono::steady_clock::time_point{}) {
+        const double seconds = elapsed_ns / 1e9;
+        stats[0] = (std::min)(100.0, 100.0 * (now.gpu_busy_ns - last.gpu_busy_ns) / elapsed_ns);
+        stats[1] = (std::min)(100.0, 100.0 * (now.gpu_thread_busy_ns - last.gpu_thread_busy_ns) /
+                                         elapsed_ns);
+        stats[2] = (now.draws - last.draws) / seconds;
+        stats[3] = (now.submits - last.submits) / seconds;
+        last = now;
+    } else if (last.time == std::chrono::steady_clock::time_point{}) {
+        last = now;
+    }
+    stats[4] = Settings::values.resolution_info.up_factor;
+
+    jdoubleArray j_stats = env->NewDoubleArray(static_cast<jsize>(stats.size()));
+    env->SetDoubleArrayRegion(j_stats, 0, static_cast<jsize>(stats.size()), stats.data());
     return j_stats;
 }
 

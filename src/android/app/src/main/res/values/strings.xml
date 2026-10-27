@@ -60,6 +60,8 @@
     <string name="stats_overlay_options_description">Configure what information is shown in the performance stats overlay</string>
     <string name="show_fps">Show FPS</string>
     <string name="show_fps_description">Display current frames per second</string>
+    <string name="show_nova_stats">Show bottleneck stats</string>
+    <string name="show_nova_stats_description">Display GPU load, GPU emulation thread load, draw calls per frame and the current resolution scale. A GPU emulation thread near 100% means the scene is limited by draw calls, not by the resolution.</string>
     <string name="show_frametime">Show Frametime</string>
     <string name="show_app_ram_usage">Show App Memory Usage</string>
     <string name="show_app_ram_usage_description">Display the amount of RAM the emulator is using</string>

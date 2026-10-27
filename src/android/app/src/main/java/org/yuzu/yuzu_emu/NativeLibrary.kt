@@ -203,6 +203,11 @@ object NativeLibrary {
     external fun getPerfStats(): DoubleArray
 
     /**
+     * Returns [GPU load %, GPU thread load %, draws/s, submits/s, resolution scale]
+     */
+    external fun getNovaStats(): DoubleArray
+
+    /**
      * Returns the number of shaders being built
      */
     external fun getShadersBuilding(): Int

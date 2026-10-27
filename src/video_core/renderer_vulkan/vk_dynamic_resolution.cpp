@@ -46,10 +46,11 @@ DynamicResolution::DynamicResolution(Scheduler& scheduler_, RasterizerVulkan& ra
 }
 
 void DynamicResolution::OnFramePresented() {
+    const u64 busy_ns = scheduler.ConsumeGpuBusyNs();
     if (levels.size() < 2) {
         return;
     }
-    window_busy_ns += scheduler.ConsumeGpuBusyNs();
+    window_busy_ns += busy_ns;
     ++window_frames;
 
     const auto now = Clock::now();

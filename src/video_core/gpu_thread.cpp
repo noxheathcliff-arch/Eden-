@@ -4,6 +4,8 @@
 // SPDX-FileCopyrightText: Copyright 2019 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <chrono>
+
 #include "common/assert.h"
 #include "common/scope_exit.h"
 #include "common/settings.h"
@@ -15,6 +17,7 @@
 #include "video_core/gpu.h"
 #include "video_core/gpu_thread.h"
 #include "video_core/host1x/host1x.h"
+#include "video_core/nova_stats.h"
 #include "video_core/renderer_base.h"
 
 namespace VideoCommon::GPUThread {
@@ -40,6 +43,7 @@ void ThreadManager::StartThread(VideoCore::RendererBase& renderer, Core::Fronten
             if (stop_token.stop_requested()) {
                 break;
             }
+            const auto work_start = std::chrono::steady_clock::now();
             if (auto* submit_list = std::get_if<SubmitListCommand>(&next.data)) {
                 scheduler.Push(system.GPU(), submit_list->channel, std::move(submit_list->entries));
             } else if (std::holds_alternative<GPUTickCommand>(next.data)) {
@@ -51,6 +55,11 @@ void ThreadManager::StartThread(VideoCore::RendererBase& renderer, Core::Fronten
             } else {
                 ASSERT(false);
             }
+            VideoCore::NovaStats::gpu_thread_busy_ns.fetch_add(
+                static_cast<u64>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                     std::chrono::steady_clock::now() - work_start)
+                                     .count()),
+                std::memory_order_relaxed);
             state.signaled_fence.store(next.fence);
             if (next.block) {
                 // We have to lock the write_lock to ensure that the condition_variable wait not get a

@@ -169,6 +169,7 @@ add_library(video_core STATIC
     renderer_vulkan/vk_graphics_pipeline.h
     renderer_vulkan/vk_multi_range_buffer.cpp
     renderer_vulkan/vk_multi_range_buffer.h
+    nova_stats.h
     renderer_vulkan/vk_dynamic_resolution.cpp
     renderer_vulkan/vk_dynamic_resolution.h
     renderer_vulkan/vk_master_semaphore.cpp

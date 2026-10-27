@@ -16,6 +16,7 @@
 #include "common/settings.h"
 #include "common/thread.h"
 #include "video_core/gpu_logging/gpu_logging.h"
+#include "video_core/nova_stats.h"
 #include "video_core/renderer_vulkan/vk_command_pool.h"
 #include "video_core/renderer_vulkan/vk_graphics_pipeline.h"
 #include "video_core/renderer_vulkan/vk_master_semaphore.h"
@@ -47,7 +48,7 @@ Scheduler::Scheduler(const Device& device_, StateTracker& state_tracker_)
       master_semaphore{std::make_unique<MasterSemaphore>(device)},
       command_pool{std::make_unique<CommandPool>(*master_semaphore, device)} {
 
-    if (Settings::values.dynamic_resolution.GetValue() && device.SupportsTimestamps()) {
+    if (device.SupportsTimestamps()) {
         const auto families = device.GetPhysical().GetQueueFamilyProperties();
         const u32 valid_bits = families[device.GetGraphicsFamily()].timestampValidBits;
         if (valid_bits > 0) {
@@ -112,6 +113,7 @@ u64 Scheduler::ConsumeGpuBusyNs() {
         pending_timestamps.pop_front();
         timestamp_pairs_in_flight.fetch_sub(1, std::memory_order_relaxed);
     }
+    VideoCore::NovaStats::gpu_busy_ns.fetch_add(busy_ns, std::memory_order_relaxed);
     return busy_ns;
 }
 
@@ -395,6 +397,7 @@ void Scheduler::AllocateWorkerCommandBuffer() {
 }
 
 u64 Scheduler::SubmitExecution(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
+    VideoCore::NovaStats::submits.fetch_add(1, std::memory_order_relaxed);
     EndPendingOperations();
     InvalidateState();
 

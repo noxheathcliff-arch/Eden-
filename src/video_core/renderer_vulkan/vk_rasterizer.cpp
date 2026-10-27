@@ -15,6 +15,7 @@
 
 #include "common/assert.h"
 #include "common/logging.h"
+#include "video_core/nova_stats.h"
 #include "common/scope_exit.h"
 #include "common/settings.h"
 #include "video_core/buffer_cache/buffer_cache.h"
@@ -234,6 +235,7 @@ RasterizerVulkan::~RasterizerVulkan() {
 
 template <typename Func>
 void RasterizerVulkan::PrepareDraw(bool is_indexed, Func&& draw_func) {
+    VideoCore::NovaStats::draws.fetch_add(1, std::memory_order_relaxed);
 
     SCOPE_EXIT {
         gpu.TickWork();

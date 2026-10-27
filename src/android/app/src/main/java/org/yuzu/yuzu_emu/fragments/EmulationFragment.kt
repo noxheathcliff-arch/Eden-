@@ -1554,6 +1554,21 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                         sb.append(fpsText)
                     }
 
+                    if (BooleanSetting.SHOW_NOVA_STATS.getBoolean(needsGlobal)) {
+                        val nova = NativeLibrary.getNovaStats()
+                        val drawsPerFrame = if (actualFps > 0.5) nova[2] / actualFps else 0.0
+                        if (sb.isNotEmpty()) sb.append(" | ")
+                        sb.append(
+                            String.format(
+                                "GPU %.0f%% | GPU thr %.0f%% | %.0f draws/f | %.2fx",
+                                nova[0],
+                                nova[1],
+                                drawsPerFrame,
+                                nova[4]
+                            )
+                        )
+                    }
+
                     if (BooleanSetting.SHOW_FRAMETIME.getBoolean(needsGlobal)) {
                         if (sb.isNotEmpty()) sb.append(" | ")
                         sb.append(

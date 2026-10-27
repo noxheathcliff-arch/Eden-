@@ -515,6 +515,13 @@ abstract class SettingsItem(
             )
             put(
                 SwitchSetting(
+                    BooleanSetting.SHOW_NOVA_STATS,
+                    R.string.show_nova_stats,
+                    descriptionId = R.string.show_nova_stats_description
+                )
+            )
+            put(
+                SwitchSetting(
                     BooleanSetting.SHOW_FRAMETIME,
                     R.string.show_frametime,
                     descriptionId = 0

@@ -587,6 +587,7 @@ class SettingsFragmentPresenter(
 
             add(HeaderSetting(R.string.stats_overlay_items))
             add(BooleanSetting.SHOW_FPS.key)
+            add(BooleanSetting.SHOW_NOVA_STATS.key)
             add(BooleanSetting.SHOW_FRAMETIME.key)
             add(BooleanSetting.SHOW_APP_RAM_USAGE.key)
             add(BooleanSetting.SHOW_SYSTEM_RAM_USAGE.key)

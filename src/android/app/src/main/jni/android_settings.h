@@ -114,6 +114,10 @@ namespace AndroidSettings {
                                          Settings::Category::Overlay,
                                          Settings::Specialization::Default, true, true,
                                          &show_performance_overlay};
+        Settings::Setting<bool> show_nova_stats{linkage, true, "show_nova_stats",
+                                                Settings::Category::Overlay,
+                                                Settings::Specialization::Default, true, true,
+                                                &show_performance_overlay};
         Settings::Setting<bool> show_frame_time{linkage, false, "show_frame_time",
                                                 Settings::Category::Overlay,
                                                 Settings::Specialization::Default, true, true,

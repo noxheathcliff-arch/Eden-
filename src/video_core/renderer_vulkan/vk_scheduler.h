@@ -97,7 +97,6 @@ public:
     }
 
     /// Returns the GPU execution time of completed submissions since the last call.
-    /// Only sampled when dynamic resolution is enabled.
     u64 ConsumeGpuBusyNs();
 
     // Registers a callback to perform on queue submission.
