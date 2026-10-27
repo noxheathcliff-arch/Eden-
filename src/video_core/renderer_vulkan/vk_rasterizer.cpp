@@ -1009,6 +1009,15 @@ void RasterizerVulkan::FlushWork() {
         scheduler.DispatchWork();
         return;
     }
+#ifdef __ANDROID__
+    // Submitting ends the active render pass, which forces a full attachment store/load.
+    // Wait for a natural render pass boundary unless the backlog grows too large.
+    static constexpr u32 MAX_DEFERRED_DRAWS = DRAWS_TO_DISPATCH * 8;
+    if (scheduler.IsRenderPassActive() && draw_counter < MAX_DEFERRED_DRAWS) {
+        scheduler.DispatchWork();
+        return;
+    }
+#endif
     scheduler.Flush();
     draw_counter = 0;
 }

@@ -198,6 +198,24 @@ android {
             }
         }
 
+        create("nova") {
+            dimension = "version"
+            minSdk = 33
+            manifestPlaceholders += mapOf("appNameBase" to "Eden Nova")
+            resValue("string", "app_name_suffixed", "Eden Nova")
+            applicationId = "dev.eden.nova"
+
+            externalNativeBuild {
+                cmake {
+                    arguments.add("-DYUZU_BUILD_PRESET=exynos1580")
+                }
+            }
+
+            ndk {
+                abiFilters += listOf("arm64-v8a")
+            }
+        }
+
         create("genshinSpoof") {
             dimension = "version"
             minSdk = 35
@@ -270,7 +288,7 @@ android {
 
         // apply nightly suffix I/A
         resValue("string", "app_name_suffixed", "$currentName$suffix")
-        resValue("string", "app_name", "Eden$suffix")
+        resValue("string", "app_name", "$currentName$suffix")
     }
 
     sourceSets {
